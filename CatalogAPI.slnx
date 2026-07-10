@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CatalogAPI/CatalogAPI.csproj" Id="6a625ff1-56e7-40bc-a6fe-49eee4191b4e" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CatalogAPI.Tests/CatalogAPI.Tests.csproj" Id="05f96a55-917c-46c4-b4af-7cc9ffdf3b8c" />
+  </Folder>
+</Solution>
