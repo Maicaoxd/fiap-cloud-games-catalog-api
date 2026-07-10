@@ -155,6 +155,35 @@ O projeto aceita o mesmo padrao usado no UsersAPI para job de migration:
 dotnet run --project src/CatalogAPI/CatalogAPI.csproj -- --migrate
 ```
 
+## Docker da API
+
+Build da imagem:
+
+```powershell
+docker build -t maicaoxd/fiap-cloud-games-catalog-api:0.1.0 .
+```
+
+Para executar o ambiente completo com UsersAPI, CatalogAPI, PaymentsAPI, NotificationsAPI, RabbitMQ e bancos SQL Server, use o `docker-compose.yml` do repositorio `fiap-cloud-games-orchestration`.
+
+## Kubernetes
+
+Este microsservico tem manifests em `k8s/` com:
+
+- `Deployment`
+- `Service`
+- `ConfigMap`
+- `Secret`
+- `Job` de migration
+
+Aplicar manifests deste servico:
+
+```powershell
+kubectl apply -k .\k8s
+kubectl get pods -n fiap-cloud-games
+kubectl get services -n fiap-cloud-games
+kubectl logs deployment/catalog-api -n fiap-cloud-games
+```
+
 ## Validacao feita
 
 ```powershell
