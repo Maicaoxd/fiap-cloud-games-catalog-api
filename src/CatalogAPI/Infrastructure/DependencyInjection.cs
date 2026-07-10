@@ -62,7 +62,8 @@ namespace CatalogAPI.Infrastructure
             services.AddMassTransit(x =>
             {
                 x.SetKebabCaseEndpointNameFormatter();
-                x.AddConsumer<PaymentProcessedEventConsumer>();
+                x.AddConsumer<PaymentProcessedEventConsumer>()
+                    .Endpoint(endpoint => endpoint.Name = "catalog-payment-processed-event");
 
                 x.UsingRabbitMq((context, cfg) =>
                 {

@@ -103,6 +103,14 @@ Resposta esperada:
 
 ### PaymentProcessedEvent
 
+Fila dedicada no RabbitMQ:
+
+```text
+catalog-payment-processed-event
+```
+
+Essa fila e exclusiva da CatalogAPI. A NotificationsAPI tambem consome `PaymentProcessedEvent`, mas usa outra fila para garantir o comportamento publish/subscribe em vez de competir pela mesma mensagem.
+
 ```json
 {
   "orderId": "33333333-3333-3333-3333-333333333333",
