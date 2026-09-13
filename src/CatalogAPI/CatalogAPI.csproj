@@ -11,6 +11,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="MassTransit.RabbitMQ" Version="8.5.10" />
+		<PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
@@ -23,4 +24,3 @@
 	</ItemGroup>
 
 </Project>
-

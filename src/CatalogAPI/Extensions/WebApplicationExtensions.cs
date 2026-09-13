@@ -1,5 +1,6 @@
 ﻿using CatalogAPI.Api.Middlewares;
 using CatalogAPI.Api.Options;
+using Prometheus;
 
 namespace CatalogAPI.Api.Extensions
 {
@@ -7,6 +8,9 @@ namespace CatalogAPI.Api.Extensions
     {
         public static WebApplication UseApiPresentation(this WebApplication app)
         {
+            app.UseRouting();
+            app.UseWhen(context => context.Request.Path.StartsWithSegments("/api"),
+                pipeline => pipeline.UseHttpMetrics());
             UseRequestLogging(app);
             UseExceptionHandling(app);
             UseApiDocumentation(app);
@@ -50,6 +54,7 @@ namespace CatalogAPI.Api.Extensions
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
+            app.MapMetrics("/metrics").AllowAnonymous();
         }
     }
 }
