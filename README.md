@@ -74,7 +74,7 @@ GET individual mantem os campos SQL e acrescenta details e detailsStatus (availa
 
 Exemplo de PUT via Kong: /catalog/games/{gameId}/details, body {"developer":"Estúdio Exemplo","genres":["Ação"],"attributes":{"maxPlayers":1}}, com JWT administrativo. Os campos title/description/price não pertencem ao contrato. Corpo limitado a 64 KiB. Arrays e dicionarios null/ausentes viram vazios; campos omitidos no PUT sao limpos. Schema e datas sao gerados pelo servidor.
 
-O Compose e a documentacao completa estao no repositorio irmao de orquestracao, em mongodb/README.md. Mongo nao precisa estar acessivel para executar --migrate. Os manifestos completos de Kubernetes com Mongo e Redis também estao na orquestracao e usam CatalogAPI 0.4.0.
+O Compose e a documentacao completa estao no repositorio irmao de orquestracao, em mongodb/README.md. Mongo nao precisa estar acessivel para executar --migrate. Os manifestos completos de Kubernetes com Mongo e Redis também estao na orquestracao e usam CatalogAPI 0.4.1.
 
 ### Cache Redis
 
@@ -82,7 +82,7 @@ GET /api/games/{gameId} aplica cache-aside da resposta composta SQL/Mongo com TT
 
 O cache e compartilhado por jogo, nao por usuario, e permanece protegido pelo JWT dos controllers. Compras continuam usando SQL diretamente. detailsStatus em um HIT descreve a resposta armazenada, nao a saude atual do Mongo. Consistencia eventual em falhas/races de invalidacao pode manter dados antigos ate o TTL.
 
-Compose, credenciais academicas e guia completo: redis/README.md no repositorio irmao de orquestracao. A base Kubernetes da orquestração inclui MongoDB, Redis e a imagem CatalogAPI 0.4.0.
+Compose, credenciais academicas e guia completo: redis/README.md no repositorio irmao de orquestracao. A base Kubernetes da orquestração inclui MongoDB, Redis e a imagem CatalogAPI 0.4.1.
 
 No Gateway, use o prefixo /catalog no lugar de /api. POST de compra retorna HTTP 202 com orderId; consulte a biblioteca após o processamento assíncrono do pagamento.
 
@@ -197,7 +197,7 @@ dotnet run --project src/CatalogAPI/CatalogAPI.csproj -- --migrate
 Build da imagem:
 
 ```powershell
-docker build -t maicaoxd/fiap-cloud-games-catalog-api:0.4.0 .
+docker build -t maicaoxd/fiap-cloud-games-catalog-api:0.4.1 .
 ```
 
 Para executar o ambiente integrado com Gateway, APIs, bancos, cache, monitoração e notificações, use o `docker-compose.yml` do repositorio `fiap-cloud-games-orchestration`.
@@ -212,7 +212,7 @@ Este microsservico tem manifests em `k8s/` com:
 - `Secret`
 - `Job` de migration
 
-Os manifests isolados deste servico nao incluem a infraestrutura Mongo da Fase 3. Para essa arquitetura, aplique `k8s/` na raiz do repositorio de orquestracao, apos publicar a imagem CatalogAPI 0.4.0. Consulte o guia `mongodb/README.md` daquele repositorio.
+Os manifests isolados deste servico nao incluem a infraestrutura Mongo da Fase 3. Para essa arquitetura, aplique `k8s/` na raiz do repositorio de orquestracao, apos publicar a imagem CatalogAPI 0.4.1. Consulte o guia `mongodb/README.md` daquele repositorio.
 
 Aplicar manifests isolados deste servico (nao representa o ambiente completo da Fase 3):
 
