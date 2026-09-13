@@ -4,6 +4,7 @@ using CatalogAPI.Application.Common.Exceptions;
 using CatalogAPI.Application.Games.Deactivate;
 using CatalogAPI.Domain.Games;
 using NSubstitute;
+using CatalogAPI.Application.Abstractions.Caching;
 using Shouldly;
 
 namespace CatalogAPI.Tests.Application.Games;
@@ -26,7 +27,7 @@ public sealed class DeactivateGameUseCaseTests
             .GetByIdAsync(game.Id, Arg.Any<CancellationToken>())
             .Returns(game);
 
-        var useCase = new DeactivateGameUseCase(gameRepository);
+        var useCase = new DeactivateGameUseCase(gameRepository, Substitute.For<IGameCache>());
         var command = new DeactivateGameCommand(game.Id, deactivatedBy);
 
         await useCase.ExecuteAsync(command);
@@ -47,7 +48,7 @@ public sealed class DeactivateGameUseCaseTests
             .GetByIdAsync(gameId, Arg.Any<CancellationToken>())
             .Returns((Game?)null);
 
-        var useCase = new DeactivateGameUseCase(gameRepository);
+        var useCase = new DeactivateGameUseCase(gameRepository, Substitute.For<IGameCache>());
         var command = new DeactivateGameCommand(gameId, Guid.NewGuid());
 
         var exception = await Should.ThrowAsync<GameNotFoundException>(() => useCase.ExecuteAsync(command));
@@ -74,7 +75,7 @@ public sealed class DeactivateGameUseCaseTests
             .GetByIdAsync(game.Id, Arg.Any<CancellationToken>())
             .Returns(game);
 
-        var useCase = new DeactivateGameUseCase(gameRepository);
+        var useCase = new DeactivateGameUseCase(gameRepository, Substitute.For<IGameCache>());
         var command = new DeactivateGameCommand(game.Id, Guid.NewGuid());
 
         await useCase.ExecuteAsync(command);

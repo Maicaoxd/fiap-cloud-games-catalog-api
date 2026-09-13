@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Bson;
 using NSubstitute;
+using CatalogAPI.Application.Abstractions.Caching;
 using Shouldly;
 
 namespace CatalogAPI.Tests.Application.Games;
@@ -111,9 +112,9 @@ public sealed class GameDetailsTests
         var game = Game.Create("Game", "Description", 10, Guid.NewGuid());
         if (inactive) game.Deactivate(Guid.NewGuid());
         games.GetByIdAsync(game.Id, Arg.Any<CancellationToken>()).Returns(inactive ? game : null);
-        await Should.ThrowAsync<GameNotFoundException>(() => new GetGameUseCase(games, details, NullLogger<GetGameUseCase>.Instance).ExecuteAsync(game.Id));
+        await Should.ThrowAsync<GameNotFoundException>(() => new GetGameUseCase(games, details, NullLogger<GetGameUseCase>.Instance, Substitute.For<IGameCache>()).ExecuteAsync(game.Id));
         await details.DidNotReceiveWithAnyArgs().GetByGameIdAsync(default);
-        await Should.ThrowAsync<GameNotFoundException>(() => new UpsertGameDetailsUseCase(games, details).ExecuteAsync(game.Id, new()));
+        await Should.ThrowAsync<GameNotFoundException>(() => new UpsertGameDetailsUseCase(games, details, Substitute.For<IGameCache>()).ExecuteAsync(game.Id, new()));
         await details.DidNotReceiveWithAnyArgs().UpsertAsync(default, default!);
     }
 
@@ -132,7 +133,7 @@ public sealed class GameDetailsTests
             details.GetByGameIdAsync(game.Id, Arg.Any<CancellationToken>()).Returns(_ => Task.FromException<GameDetailsResult?>(new GameDetailsUnavailableException()));
         else
             details.GetByGameIdAsync(game.Id, Arg.Any<CancellationToken>()).Returns(state == "available" ? result : null);
-        var response = await new GetGameUseCase(games, details, NullLogger<GetGameUseCase>.Instance).ExecuteAsync(game.Id);
+        var response = await new GetGameUseCase(games, details, NullLogger<GetGameUseCase>.Instance, Substitute.For<IGameCache>()).ExecuteAsync(game.Id);
         response.DetailsStatus.ShouldBe(state); response.Price.ShouldBe(10); response.Title.ShouldBe(game.Title);
         if (state == "available") response.Details.ShouldBe(result); else response.Details.ShouldBeNull();
     }
@@ -144,7 +145,7 @@ public sealed class GameDetailsTests
         var details = Substitute.For<IGameDetailsRepository>();
         var game = Game.Create("Game", "Description", 10, Guid.NewGuid());
         games.GetByIdAsync(game.Id, Arg.Any<CancellationToken>()).Returns(game);
-        var useCase = new GetGameUseCase(games, details, NullLogger<GetGameUseCase>.Instance);
+        var useCase = new GetGameUseCase(games, details, NullLogger<GetGameUseCase>.Instance, Substitute.For<IGameCache>());
         details.GetByGameIdAsync(game.Id, Arg.Any<CancellationToken>()).Returns(_ => Task.FromException<GameDetailsResult?>(new OperationCanceledException()));
         await Should.ThrowAsync<OperationCanceledException>(() => useCase.ExecuteAsync(game.Id));
         details.GetByGameIdAsync(game.Id, Arg.Any<CancellationToken>()).Returns(_ => Task.FromException<GameDetailsResult?>(new InvalidOperationException()));
@@ -158,7 +159,7 @@ public sealed class GameDetailsTests
         var details = Substitute.For<IGameDetailsRepository>();
         var game = Game.Create("Game", "Description", 10, Guid.NewGuid());
         games.GetByIdAsync(game.Id, Arg.Any<CancellationToken>()).Returns(game);
-        var useCase = new UpsertGameDetailsUseCase(games, details);
+        var useCase = new UpsertGameDetailsUseCase(games, details, Substitute.For<IGameCache>());
         await Should.ThrowAsync<ArgumentException>(() => useCase.ExecuteAsync(game.Id, new() { Media = new GameMedia(CoverUrl: "ftp://example.com") }));
         await details.DidNotReceiveWithAnyArgs().UpsertAsync(default, default!);
         var expected = new GameDetailsResult(1, new(), DateTime.UtcNow, DateTime.UtcNow);
@@ -176,7 +177,7 @@ public sealed class GameDetailsTests
         var game = Game.Create("Game", "Description", 10, Guid.NewGuid());
         games.GetByIdAsync(game.Id, Arg.Any<CancellationToken>()).Returns(game);
         details.UpsertAsync(game.Id, Arg.Any<GameDetailsContent>(), Arg.Any<CancellationToken>()).Returns(_ => Task.FromException<GameDetailsResult>(new GameDetailsUnavailableException()));
-        await Should.ThrowAsync<GameDetailsUnavailableException>(() => new UpsertGameDetailsUseCase(games, details).ExecuteAsync(game.Id, new()));
+        await Should.ThrowAsync<GameDetailsUnavailableException>(() => new UpsertGameDetailsUseCase(games, details, Substitute.For<IGameCache>()).ExecuteAsync(game.Id, new()));
     }
 
     [Fact]

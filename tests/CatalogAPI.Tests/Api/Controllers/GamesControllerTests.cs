@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using CatalogAPI.Application.Abstractions.Caching;
 using Shouldly;
 
 namespace CatalogAPI.Tests.Api.Controllers;
@@ -326,10 +327,10 @@ public sealed class GamesControllerTests
         string role = nameof(UserRole.Administrator))
     {
         var createUseCase = new CreateGameUseCase(gameRepository);
-        var deactivateUseCase = new DeactivateGameUseCase(gameRepository);
-        var getUseCase = new GetGameUseCase(gameRepository, Substitute.For<IGameDetailsRepository>(), NullLogger<GetGameUseCase>.Instance);
+        var deactivateUseCase = new DeactivateGameUseCase(gameRepository, Substitute.For<IGameCache>());
+        var getUseCase = new GetGameUseCase(gameRepository, Substitute.For<IGameDetailsRepository>(), NullLogger<GetGameUseCase>.Instance, Substitute.For<IGameCache>());
         var listUseCase = new ListGamesUseCase(gameRepository);
-        var updateUseCase = new UpdateGameUseCase(gameRepository);
+        var updateUseCase = new UpdateGameUseCase(gameRepository, Substitute.For<IGameCache>());
 
         return new GamesController(createUseCase, deactivateUseCase, getUseCase, listUseCase, updateUseCase)
         {

@@ -11,6 +11,7 @@ Este projeto foi extraido do monolito FiapCloudGames e segue o mesmo padrao arqu
 - Entity Framework Core
 - SQL Server
 - MongoDB (detalhes opcionais do catalogo; driver oficial .NET)
+- Redis via IDistributedCache (cache do GET individual por cinco minutos)
 - RabbitMQ
 - MassTransit
 - JWT Bearer Authentication
@@ -35,6 +36,9 @@ Este projeto foi extraido do monolito FiapCloudGames e segue o mesmo padrao arqu
 | `MongoDb__DatabaseName` | Padrao FiapCloudGamesCatalog. |
 | `MongoDb__CollectionName` | Padrao game_details. |
 | `MongoDb__OperationTimeoutSeconds` | Limite de operacao/conexao Mongo; padrao 2 segundos (1 a 10). |
+| `Redis__Enabled` | Habilita cache; padrao false fora do Compose. |
+| `Redis__Configuration` | Endpoint Redis; no Compose catalog-redis:6379. |
+| `Redis__Password` | Senha Redis; configurada separadamente do endpoint. |
 | `Jwt__Issuer` | Emissor esperado no token JWT. |
 | `Jwt__Audience` | Audiencia esperada no token JWT. |
 | `Jwt__Secret` | Chave usada para validar o token JWT emitido pelo UsersAPI. |
@@ -71,6 +75,14 @@ GET individual mantem os campos SQL e acrescenta details e detailsStatus (availa
 Exemplo de PUT via Kong: /catalog/games/{gameId}/details, body {"developer":"Studio","genres":["Action"],"attributes":{"maxPlayers":1}}, com JWT administrativo. Fields title/description/price nao pertencem ao contrato. Corpo limitado a 64 KiB. Arrays e dicionarios null/ausentes viram vazios; campos omitidos no PUT sao limpos. Schema e datas sao gerados pelo servidor.
 
 O Compose e a documentacao completa estao no repositorio irmao de orquestracao, em mongodb/README.md. Mongo nao precisa estar acessivel para executar --migrate. Os manifestos completos de Kubernetes com Mongo tambem estao na orquestracao e usam CatalogAPI 0.3.0.
+
+### Cache Redis — Docker
+
+GET /api/games/{gameId} aplica cache-aside da resposta composta SQL/Mongo com TTL absoluto de cinco minutos. HIT evita ambos os bancos; MISS carrega e cacheia available/notConfigured, nunca unavailable nem 404. Atualizacao, desativacao e alteracao dos detalhes invalidam depois do commit. Redis indisponivel nao impede a operacao; cancelamento do cliente nao e mascarado. Logs: CACHE MISS, CACHE HIT e CACHE INVALIDATED.
+
+O cache e compartilhado por jogo, nao por usuario, e permanece protegido pelo JWT dos controllers. Compras continuam usando SQL diretamente. detailsStatus em um HIT descreve a resposta armazenada, nao a saude atual do Mongo. Consistencia eventual em falhas/races de invalidacao pode manter dados antigos ate o TTL.
+
+Compose, credenciais academicas e guia completo: redis/README.md no repositorio irmao de orquestracao. Kubernetes 0.3.0 nao foi alterado nesta etapa.
 
 ### Exemplo de compra
 

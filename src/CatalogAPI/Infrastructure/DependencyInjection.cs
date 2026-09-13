@@ -11,6 +11,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using CatalogAPI.Infrastructure.Persistence.Mongo;
 using MongoDB.Driver;
+using CatalogAPI.Application.Abstractions.Caching;
+using CatalogAPI.Infrastructure.Caching;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
+using StackExchange.Redis;
 
 namespace CatalogAPI.Infrastructure
 {
@@ -22,6 +26,7 @@ namespace CatalogAPI.Infrastructure
         {
             AddPersistence(services, configuration);
             AddMongoPersistence(services, configuration);
+            AddRedisCache(services, configuration);
             AddSecurity(services, configuration);
             AddMessaging(services, configuration);
 
@@ -65,6 +70,30 @@ namespace CatalogAPI.Infrastructure
                 return new MongoClient(settings);
             });
             services.AddScoped<IGameDetailsRepository, MongoGameDetailsRepository>();
+        }
+
+        private static void AddRedisCache(IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddOptions<Caching.RedisOptions>()
+                .Bind(configuration.GetSection(Caching.RedisOptions.SectionName))
+                .Validate(o => !o.Enabled || !string.IsNullOrWhiteSpace(o.Configuration), "Redis:Configuration is required when caching is enabled.")
+                .ValidateOnStart();
+            services.AddStackExchangeRedisCache(_ => { });
+            services.AddOptions<RedisCacheOptions>().Configure<IOptions<Caching.RedisOptions>>((cache, configured) =>
+            {
+                var options = configured.Value;
+                var connection = ConfigurationOptions.Parse(options.Enabled ? options.Configuration : "localhost:6379");
+                if (!string.IsNullOrEmpty(options.Password)) connection.Password = options.Password;
+                connection.AbortOnConnectFail = false;
+                connection.ConnectTimeout = 1000;
+                connection.AsyncTimeout = 1000;
+                connection.SyncTimeout = 1000;
+                connection.ConnectRetry = 0;
+                connection.BacklogPolicy = BacklogPolicy.FailFast;
+                cache.ConfigurationOptions = connection;
+                cache.InstanceName = "fcg:catalog:";
+            });
+            services.AddScoped<IGameCache, RedisGameCache>();
         }
 
         private static void AddSecurity(IServiceCollection services, IConfiguration configuration)

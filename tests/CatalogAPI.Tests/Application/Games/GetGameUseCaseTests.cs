@@ -5,6 +5,7 @@ using CatalogAPI.Application.Games.Get;
 using Microsoft.Extensions.Logging.Abstractions;
 using CatalogAPI.Domain.Games;
 using NSubstitute;
+using CatalogAPI.Application.Abstractions.Caching;
 using Shouldly;
 
 namespace CatalogAPI.Tests.Application.Games;
@@ -26,7 +27,7 @@ public sealed class GetGameUseCaseTests
             .GetByIdAsync(game.Id, Arg.Any<CancellationToken>())
             .Returns(game);
 
-        var useCase = new GetGameUseCase(gameRepository, Substitute.For<IGameDetailsRepository>(), NullLogger<GetGameUseCase>.Instance);
+        var useCase = new GetGameUseCase(gameRepository, Substitute.For<IGameDetailsRepository>(), NullLogger<GetGameUseCase>.Instance, Substitute.For<IGameCache>());
 
         var result = await useCase.ExecuteAsync(game.Id);
 
@@ -47,7 +48,7 @@ public sealed class GetGameUseCaseTests
             .GetByIdAsync(gameId, Arg.Any<CancellationToken>())
             .Returns((Game?)null);
 
-        var useCase = new GetGameUseCase(gameRepository, Substitute.For<IGameDetailsRepository>(), NullLogger<GetGameUseCase>.Instance);
+        var useCase = new GetGameUseCase(gameRepository, Substitute.For<IGameDetailsRepository>(), NullLogger<GetGameUseCase>.Instance, Substitute.For<IGameCache>());
 
         var excecao = await Should.ThrowAsync<GameNotFoundException>(() => useCase.ExecuteAsync(gameId));
 
@@ -70,7 +71,7 @@ public sealed class GetGameUseCaseTests
             .GetByIdAsync(game.Id, Arg.Any<CancellationToken>())
             .Returns(game);
 
-        var useCase = new GetGameUseCase(gameRepository, Substitute.For<IGameDetailsRepository>(), NullLogger<GetGameUseCase>.Instance);
+        var useCase = new GetGameUseCase(gameRepository, Substitute.For<IGameDetailsRepository>(), NullLogger<GetGameUseCase>.Instance, Substitute.For<IGameCache>());
 
         var excecao = await Should.ThrowAsync<GameNotFoundException>(() => useCase.ExecuteAsync(game.Id));
 

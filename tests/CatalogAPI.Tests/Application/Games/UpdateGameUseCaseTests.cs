@@ -4,6 +4,7 @@ using CatalogAPI.Application.Common.Exceptions;
 using CatalogAPI.Application.Games.Update;
 using CatalogAPI.Domain.Games;
 using NSubstitute;
+using CatalogAPI.Application.Abstractions.Caching;
 using Shouldly;
 
 namespace CatalogAPI.Tests.Application.Games;
@@ -29,7 +30,7 @@ public sealed class UpdateGameUseCaseTests
             .ExistsByTitleForAnotherGameAsync(Arg.Any<string>(), game.Id, Arg.Any<CancellationToken>())
             .Returns(false);
 
-        var useCase = new UpdateGameUseCase(gameRepository);
+        var useCase = new UpdateGameUseCase(gameRepository, Substitute.For<IGameCache>());
         var command = new UpdateGameCommand(
             game.Id,
             "Stardew Valley Deluxe",
@@ -57,7 +58,7 @@ public sealed class UpdateGameUseCaseTests
             .GetByIdAsync(gameId, Arg.Any<CancellationToken>())
             .Returns((Game?)null);
 
-        var useCase = new UpdateGameUseCase(gameRepository);
+        var useCase = new UpdateGameUseCase(gameRepository, Substitute.For<IGameCache>());
         var command = new UpdateGameCommand(
             gameId,
             "Stardew Valley",
@@ -91,7 +92,7 @@ public sealed class UpdateGameUseCaseTests
             .ExistsByTitleForAnotherGameAsync("Hades", game.Id, Arg.Any<CancellationToken>())
             .Returns(true);
 
-        var useCase = new UpdateGameUseCase(gameRepository);
+        var useCase = new UpdateGameUseCase(gameRepository, Substitute.For<IGameCache>());
         var command = new UpdateGameCommand(
             game.Id,
             "Hades",
