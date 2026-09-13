@@ -9,6 +9,7 @@ using CatalogAPI.Application.Abstractions.Persistence;
 using CatalogAPI.Application.Games.Create;
 using CatalogAPI.Application.Games.Deactivate;
 using CatalogAPI.Application.Games.Get;
+using Microsoft.Extensions.Logging.Abstractions;
 using CatalogAPI.Application.Games.List;
 using CatalogAPI.Application.Games.Update;
 using CatalogAPI.Domain.Games;
@@ -326,7 +327,7 @@ public sealed class GamesControllerTests
     {
         var createUseCase = new CreateGameUseCase(gameRepository);
         var deactivateUseCase = new DeactivateGameUseCase(gameRepository);
-        var getUseCase = new GetGameUseCase(gameRepository);
+        var getUseCase = new GetGameUseCase(gameRepository, Substitute.For<IGameDetailsRepository>(), NullLogger<GetGameUseCase>.Instance);
         var listUseCase = new ListGamesUseCase(gameRepository);
         var updateUseCase = new UpdateGameUseCase(gameRepository);
 

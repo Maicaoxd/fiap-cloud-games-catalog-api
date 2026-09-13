@@ -9,6 +9,8 @@ using CatalogAPI.Infrastructure.Security;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using CatalogAPI.Infrastructure.Persistence.Mongo;
+using MongoDB.Driver;
 
 namespace CatalogAPI.Infrastructure
 {
@@ -19,6 +21,7 @@ namespace CatalogAPI.Infrastructure
             IConfiguration configuration)
         {
             AddPersistence(services, configuration);
+            AddMongoPersistence(services, configuration);
             AddSecurity(services, configuration);
             AddMessaging(services, configuration);
 
@@ -37,6 +40,31 @@ namespace CatalogAPI.Infrastructure
             services.AddScoped<IGameRepository, GameRepository>();
             services.AddScoped<ILibraryRepository, LibraryRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
+        }
+
+        private static void AddMongoPersistence(IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddOptions<MongoDbOptions>()
+                .Bind(configuration.GetSection(MongoDbOptions.SectionName))
+                .Validate(o => !string.IsNullOrWhiteSpace(o.ConnectionString), "MongoDb:ConnectionString is required.")
+                .Validate(o => !string.IsNullOrWhiteSpace(o.DatabaseName), "MongoDb:DatabaseName is required.")
+                .Validate(o => !string.IsNullOrWhiteSpace(o.CollectionName), "MongoDb:CollectionName is required.")
+                .Validate(o => string.IsNullOrEmpty(o.Username) == string.IsNullOrEmpty(o.Password), "MongoDb:Username and Password must be supplied together.")
+                .Validate(o => o.OperationTimeoutSeconds is >= 1 and <= 10, "MongoDb:OperationTimeoutSeconds must be between 1 and 10.")
+                .ValidateOnStart();
+            services.AddSingleton<IMongoClient>(provider =>
+            {
+                var options = provider.GetRequiredService<IOptions<MongoDbOptions>>().Value;
+                var settings = MongoClientSettings.FromConnectionString(options.ConnectionString);
+                if (!string.IsNullOrEmpty(options.Username))
+                    settings.Credential = MongoCredential.CreateCredential(options.DatabaseName, options.Username, options.Password);
+                var timeout = TimeSpan.FromSeconds(options.OperationTimeoutSeconds);
+                settings.ServerSelectionTimeout = timeout;
+                settings.ConnectTimeout = timeout;
+                settings.SocketTimeout = timeout;
+                return new MongoClient(settings);
+            });
+            services.AddScoped<IGameDetailsRepository, MongoGameDetailsRepository>();
         }
 
         private static void AddSecurity(IServiceCollection services, IConfiguration configuration)

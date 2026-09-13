@@ -10,6 +10,7 @@ Este projeto foi extraido do monolito FiapCloudGames e segue o mesmo padrao arqu
 - ASP.NET Core Web API
 - Entity Framework Core
 - SQL Server
+- MongoDB (detalhes opcionais do catalogo; driver oficial .NET)
 - RabbitMQ
 - MassTransit
 - JWT Bearer Authentication
@@ -29,6 +30,11 @@ Este projeto foi extraido do monolito FiapCloudGames e segue o mesmo padrao arqu
 | Variavel | Descricao |
 | --- | --- |
 | `ConnectionStrings__DefaultConnection` | Connection string SQL Server do banco do catalogo. |
+| `MongoDb__ConnectionString` | URI MongoDB, no Compose: mongodb://catalog-mongodb:27017. |
+| `MongoDb__Username` / `MongoDb__Password` | Usuario/senha opcionais, sempre configurados em conjunto; autenticacao no banco configurado. |
+| `MongoDb__DatabaseName` | Padrao FiapCloudGamesCatalog. |
+| `MongoDb__CollectionName` | Padrao game_details. |
+| `MongoDb__OperationTimeoutSeconds` | Limite de operacao/conexao Mongo; padrao 2 segundos (1 a 10). |
 | `Jwt__Issuer` | Emissor esperado no token JWT. |
 | `Jwt__Audience` | Audiencia esperada no token JWT. |
 | `Jwt__Secret` | Chave usada para validar o token JWT emitido pelo UsersAPI. |
@@ -48,6 +54,7 @@ Todos os endpoints exigem JWT. Operacoes administrativas exigem role `Administra
 | --- | --- | --- |
 | `GET` | `/api/games` | Lista jogos ativos. |
 | `GET` | `/api/games/{gameId}` | Consulta jogo por id. |
+| `PUT` | `/api/games/{gameId}/details` | Substitui/upsert de detalhes Mongo. Requer Administrator; nao muda o SQL. |
 | `POST` | `/api/games` | Cria jogo. Requer `Administrator`. |
 | `PUT` | `/api/games/{gameId}` | Atualiza jogo. Requer `Administrator`. |
 | `PATCH` | `/api/games/{gameId}/deactivate` | Desativa jogo. Requer `Administrator`. |
@@ -56,6 +63,14 @@ Todos os endpoints exigem JWT. Operacoes administrativas exigem role `Administra
 | `GET` | `/health` | Readiness com banco e RabbitMQ. |
 | `GET` | `/health/live` | Liveness simples. |
 | `GET` | `/health/ready` | Readiness com banco e RabbitMQ. |
+
+### Detalhes do catalogo — Fase 3
+
+GET individual mantem os campos SQL e acrescenta details e detailsStatus (available, notConfigured ou unavailable). Details contem schemaVersion, content e datas UTC. A listagem e o fluxo de compra continuam exclusivamente SQL. Documento ausente retorna 200/details null; falha Mongo retorna dados SQL com unavailable. PUT exige jogo ativo, valida o contrato, preserva createdAt e retorna 503 se a gravacao Mongo falhar.
+
+Exemplo de PUT via Kong: /catalog/games/{gameId}/details, body {"developer":"Studio","genres":["Action"],"attributes":{"maxPlayers":1}}, com JWT administrativo. Fields title/description/price nao pertencem ao contrato. Corpo limitado a 64 KiB. Arrays e dicionarios null/ausentes viram vazios; campos omitidos no PUT sao limpos. Schema e datas sao gerados pelo servidor.
+
+O Compose e a documentacao completa estao no repositorio irmao de orquestracao, em mongodb/README.md. Mongo nao precisa estar acessivel para executar --migrate. Esta etapa ainda nao foi adicionada ao Kubernetes.
 
 ### Exemplo de compra
 

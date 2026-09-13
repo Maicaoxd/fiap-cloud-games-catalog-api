@@ -1,5 +1,6 @@
 ﻿using CatalogAPI.Application.Games.Create;
 using CatalogAPI.Application.Games.Deactivate;
+using CatalogAPI.Application.Games.Details;
 using CatalogAPI.Application.Games.Get;
 using CatalogAPI.Application.Games.List;
 using CatalogAPI.Application.Games.Update;
@@ -28,6 +29,7 @@ namespace CatalogAPI.Application
             services.AddScoped<GetGameUseCase>();
             services.AddScoped<ListGamesUseCase>();
             services.AddScoped<UpdateGameUseCase>();
+            services.AddScoped<UpsertGameDetailsUseCase>();
         }
 
         private static void AddLibraryUseCases(IServiceCollection services)

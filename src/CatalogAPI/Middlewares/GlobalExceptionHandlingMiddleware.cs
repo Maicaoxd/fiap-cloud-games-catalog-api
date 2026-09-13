@@ -37,6 +37,11 @@ namespace CatalogAPI.Api.Middlewares
 
         private void LogException(HttpContext context, Exception exception, int statusCode)
         {
+            if (exception is GameDetailsUnavailableException)
+            {
+                _logger.LogWarning("MongoDB unavailable while processing {Method} {Path}.", context.Request.Method, context.Request.Path);
+                return;
+            }
             if (statusCode >= StatusCodes.Status500InternalServerError)
             {
                 _logger.LogError(
@@ -69,11 +74,16 @@ namespace CatalogAPI.Api.Middlewares
         {
             return exception switch
             {
-                BadHttpRequestException => CreateProblemDetails(
+                GameDetailsUnavailableException => CreateProblemDetails(
+                    context, StatusCodes.Status503ServiceUnavailable,
+                    "Serviço indisponível", exception.Message),
+                BadHttpRequestException badRequest => CreateProblemDetails(
                     context,
-                    StatusCodes.Status400BadRequest,
+                    badRequest.StatusCode,
                     ApiMessages.Validation.Title,
-                    ApiMessages.Validation.RequestBodyRequired),
+                    badRequest.StatusCode == StatusCodes.Status413PayloadTooLarge
+                        ? "O corpo da requisição excede o limite permitido."
+                        : ApiMessages.Validation.RequestBodyRequired),
 
                 ArgumentException => CreateProblemDetails(
                     context,

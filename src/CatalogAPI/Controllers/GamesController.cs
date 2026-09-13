@@ -73,7 +73,9 @@ namespace CatalogAPI.Api.Controllers
                 result.GameId,
                 result.Title,
                 result.Description,
-                result.Price);
+                result.Price,
+                result.Details,
+                result.DetailsStatus);
 
             return Ok(response);
         }
