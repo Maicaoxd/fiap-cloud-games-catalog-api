@@ -70,7 +70,7 @@ GET individual mantem os campos SQL e acrescenta details e detailsStatus (availa
 
 Exemplo de PUT via Kong: /catalog/games/{gameId}/details, body {"developer":"Studio","genres":["Action"],"attributes":{"maxPlayers":1}}, com JWT administrativo. Fields title/description/price nao pertencem ao contrato. Corpo limitado a 64 KiB. Arrays e dicionarios null/ausentes viram vazios; campos omitidos no PUT sao limpos. Schema e datas sao gerados pelo servidor.
 
-O Compose e a documentacao completa estao no repositorio irmao de orquestracao, em mongodb/README.md. Mongo nao precisa estar acessivel para executar --migrate. Esta etapa ainda nao foi adicionada ao Kubernetes.
+O Compose e a documentacao completa estao no repositorio irmao de orquestracao, em mongodb/README.md. Mongo nao precisa estar acessivel para executar --migrate. Os manifestos completos de Kubernetes com Mongo tambem estao na orquestracao e usam CatalogAPI 0.3.0.
 
 ### Exemplo de compra
 
@@ -190,7 +190,9 @@ Este microsservico tem manifests em `k8s/` com:
 - `Secret`
 - `Job` de migration
 
-Aplicar manifests deste servico:
+Os manifests isolados deste servico nao incluem a infraestrutura Mongo da Fase 3. Para essa arquitetura, aplique `k8s/` na raiz do repositorio de orquestracao, apos publicar a imagem CatalogAPI 0.3.0. Consulte o guia `mongodb/README.md` daquele repositorio.
+
+Aplicar manifests isolados deste servico (nao representa o ambiente completo da Fase 3):
 
 ```powershell
 kubectl apply -k .\k8s
