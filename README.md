@@ -138,7 +138,7 @@ Fila dedicada no RabbitMQ:
 catalog-payment-processed-event
 ```
 
-Essa fila e exclusiva da CatalogAPI. A Function no Docker e a NotificationsAPI no Kubernetes também consomem PaymentProcessedEvent, mas usa outra fila para garantir o comportamento publish/subscribe em vez de competir pela mesma mensagem.
+Essa fila é exclusiva da CatalogAPI. A Notifications Function também consome PaymentProcessedEvent no Docker e Kubernetes, mas usa a fila notifications-payment-processed-event para receber sua própria cópia. NotificationsAPI é uma alternativa legada à Function, não um consumidor simultâneo da mesma fila.
 
 ```json
 {
