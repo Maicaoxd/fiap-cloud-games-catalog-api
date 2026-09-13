@@ -39,7 +39,7 @@ namespace CatalogAPI.Api.Middlewares
 
             _logger.Log(
                 logLevel,
-                "HTTP {Method} {Path} responded {StatusCode} in {ElapsedMilliseconds} ms. TraceId: {TraceId}",
+                "HTTP {Method} {Path} respondeu {StatusCode} em {ElapsedMilliseconds} ms. TraceId: {TraceId}",
                 context.Request.Method,
                 context.Request.Path.Value,
                 statusCode,
@@ -48,4 +48,3 @@ namespace CatalogAPI.Api.Middlewares
         }
     }
 }
-

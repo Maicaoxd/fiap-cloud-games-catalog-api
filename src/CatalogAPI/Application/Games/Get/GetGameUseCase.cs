@@ -46,7 +46,7 @@ namespace CatalogAPI.Application.Games.Get
             catch (GameDetailsUnavailableException)
             {
                 detailsStatus = "unavailable";
-                _logger.LogWarning("MongoDB unavailable for game {GameId}; returning SQL data only.", gameId);
+                _logger.LogWarning("MongoDB indisponível para o jogo {GameId}; retornando somente os dados SQL.", gameId);
             }
 
             var result = new GetGameResult(
@@ -62,4 +62,3 @@ namespace CatalogAPI.Application.Games.Get
         }
     }
 }
-

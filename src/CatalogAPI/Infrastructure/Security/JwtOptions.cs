@@ -13,16 +13,16 @@ namespace CatalogAPI.Infrastructure.Security
             int expirationMinutes)
         {
             if (string.IsNullOrWhiteSpace(issuer))
-                throw new InvalidOperationException("Jwt issuer was not configured.");
+                throw new InvalidOperationException("O emissor JWT não foi configurado.");
 
             if (string.IsNullOrWhiteSpace(audience))
-                throw new InvalidOperationException("Jwt audience was not configured.");
+                throw new InvalidOperationException("A audiência JWT não foi configurada.");
 
             if (string.IsNullOrWhiteSpace(secret))
-                throw new InvalidOperationException("Jwt secret was not configured.");
+                throw new InvalidOperationException("O segredo JWT não foi configurado.");
 
             if (expirationMinutes <= 0)
-                throw new InvalidOperationException("Jwt expiration minutes must be greater than zero.");
+                throw new InvalidOperationException("O tempo de expiração JWT em minutos deve ser maior que zero.");
 
             Issuer = issuer;
             Audience = audience;
@@ -40,7 +40,7 @@ namespace CatalogAPI.Infrastructure.Security
             var section = configuration.GetSection(SectionName);
 
             if (!int.TryParse(section["ExpirationMinutes"], out var expirationMinutes))
-                throw new InvalidOperationException("Jwt expiration minutes was not configured.");
+                throw new InvalidOperationException("O tempo de expiração JWT em minutos não foi configurado.");
 
             return new JwtOptions(
                 section["Issuer"] ?? string.Empty,
@@ -50,4 +50,3 @@ namespace CatalogAPI.Infrastructure.Security
         }
     }
 }
-

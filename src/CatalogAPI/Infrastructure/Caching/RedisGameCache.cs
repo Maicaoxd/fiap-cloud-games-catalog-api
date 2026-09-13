@@ -18,7 +18,7 @@ public sealed class RedisGameCache(IDistributedCache cache, IOptions<RedisOption
     public async Task<GetGameResult?> GetAsync(Guid gameId, CancellationToken cancellationToken = default)
     {
         if (!options.Value.Enabled || _unavailableForRequest) return null;
-        var bytes = await BestEffortAsync(token => cache.GetAsync(Key(gameId), token), gameId, "read", cancellationToken);
+        var bytes = await BestEffortAsync(token => cache.GetAsync(Key(gameId), token), gameId, "leitura", cancellationToken);
         if (bytes is not null)
         {
             try
@@ -26,14 +26,14 @@ public sealed class RedisGameCache(IDistributedCache cache, IOptions<RedisOption
                 var value = JsonSerializer.Deserialize<GetGameResult>(bytes, JsonOptions);
                 if (IsValid(value, gameId))
                 {
-                    logger.LogInformation("CACHE HIT {GameId}", gameId);
+                    logger.LogInformation("CACHE ENCONTRADO {GameId}", gameId);
                     return value;
                 }
             }
-            catch (JsonException) { logger.LogWarning("Invalid cache payload for game {GameId}; loading authoritative data.", gameId); }
+            catch (JsonException) { logger.LogWarning("Conteúdo inválido no cache do jogo {GameId}; consultando os bancos de dados.", gameId); }
             await InvalidateAsync(gameId, cancellationToken);
         }
-        logger.LogInformation("CACHE MISS {GameId}", gameId);
+        logger.LogInformation("CACHE NÃO ENCONTRADO {GameId}", gameId);
         return null;
     }
 
@@ -46,7 +46,7 @@ public sealed class RedisGameCache(IDistributedCache cache, IOptions<RedisOption
             await cache.SetAsync(Key(game.GameId), bytes,
                 new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeToLive }, token);
             return true;
-        }, game.GameId, "write", cancellationToken);
+        }, game.GameId, "gravação", cancellationToken);
     }
 
     public async Task InvalidateAsync(Guid gameId, CancellationToken cancellationToken = default)
@@ -56,8 +56,8 @@ public sealed class RedisGameCache(IDistributedCache cache, IOptions<RedisOption
         {
             await cache.RemoveAsync(Key(gameId), token);
             return true;
-        }, gameId, "invalidate", cancellationToken);
-        if (removed) logger.LogInformation("CACHE INVALIDATED {GameId}", gameId);
+        }, gameId, "invalidação", cancellationToken);
+        if (removed) logger.LogInformation("CACHE INVALIDADO {GameId}", gameId);
     }
 
     private static bool IsValid(GetGameResult? value, Guid gameId)
@@ -78,12 +78,12 @@ public sealed class RedisGameCache(IDistributedCache cache, IOptions<RedisOption
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             _unavailableForRequest = true;
-            logger.LogWarning("Redis timeout during cache {Operation} for game {GameId}; continuing without cache.", operation, gameId);
+            logger.LogWarning("Tempo limite do Redis excedido durante {Operation} do cache do jogo {GameId}; continuando sem cache.", operation, gameId);
         }
         catch (Exception exception) when (exception is RedisException or TimeoutException)
         {
             _unavailableForRequest = true;
-            logger.LogWarning("Redis unavailable during cache {Operation} for game {GameId}; continuing without cache.", operation, gameId);
+            logger.LogWarning("Redis indisponível durante {Operation} do cache do jogo {GameId}; continuando sem cache.", operation, gameId);
         }
         return default;
     }

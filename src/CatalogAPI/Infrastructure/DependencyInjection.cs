@@ -36,7 +36,7 @@ namespace CatalogAPI.Infrastructure
         private static void AddPersistence(IServiceCollection services, IConfiguration configuration)
         {
             var connectionString = configuration.GetConnectionString("DefaultConnection")
-                ?? throw new InvalidOperationException("DefaultConnection connection string was not configured.");
+                ?? throw new InvalidOperationException("A cadeia de conexão DefaultConnection não foi configurada.");
 
             services.AddDbContext<CatalogDbContext>(options =>
                 options.UseSqlServer(connectionString));
@@ -51,11 +51,11 @@ namespace CatalogAPI.Infrastructure
         {
             services.AddOptions<MongoDbOptions>()
                 .Bind(configuration.GetSection(MongoDbOptions.SectionName))
-                .Validate(o => !string.IsNullOrWhiteSpace(o.ConnectionString), "MongoDb:ConnectionString is required.")
-                .Validate(o => !string.IsNullOrWhiteSpace(o.DatabaseName), "MongoDb:DatabaseName is required.")
-                .Validate(o => !string.IsNullOrWhiteSpace(o.CollectionName), "MongoDb:CollectionName is required.")
-                .Validate(o => string.IsNullOrEmpty(o.Username) == string.IsNullOrEmpty(o.Password), "MongoDb:Username and Password must be supplied together.")
-                .Validate(o => o.OperationTimeoutSeconds is >= 1 and <= 10, "MongoDb:OperationTimeoutSeconds must be between 1 and 10.")
+                .Validate(o => !string.IsNullOrWhiteSpace(o.ConnectionString), "MongoDb:ConnectionString é obrigatório.")
+                .Validate(o => !string.IsNullOrWhiteSpace(o.DatabaseName), "MongoDb:DatabaseName é obrigatório.")
+                .Validate(o => !string.IsNullOrWhiteSpace(o.CollectionName), "MongoDb:CollectionName é obrigatório.")
+                .Validate(o => string.IsNullOrEmpty(o.Username) == string.IsNullOrEmpty(o.Password), "MongoDb:Username e Password devem ser informados em conjunto.")
+                .Validate(o => o.OperationTimeoutSeconds is >= 1 and <= 10, "MongoDb:OperationTimeoutSeconds deve estar entre 1 e 10.")
                 .ValidateOnStart();
             services.AddSingleton<IMongoClient>(provider =>
             {
@@ -76,7 +76,7 @@ namespace CatalogAPI.Infrastructure
         {
             services.AddOptions<Caching.RedisOptions>()
                 .Bind(configuration.GetSection(Caching.RedisOptions.SectionName))
-                .Validate(o => !o.Enabled || !string.IsNullOrWhiteSpace(o.Configuration), "Redis:Configuration is required when caching is enabled.")
+                .Validate(o => !o.Enabled || !string.IsNullOrWhiteSpace(o.Configuration), "Redis:Configuration é obrigatório quando o cache está habilitado.")
                 .ValidateOnStart();
             services.AddStackExchangeRedisCache(_ => { });
             services.AddOptions<RedisCacheOptions>().Configure<IOptions<Caching.RedisOptions>>((cache, configured) =>
@@ -106,11 +106,11 @@ namespace CatalogAPI.Infrastructure
             services
                 .AddOptions<RabbitMqOptions>()
                 .Bind(configuration.GetSection(RabbitMqOptions.SectionName))
-                .Validate(options => !string.IsNullOrWhiteSpace(options.Host), "RabbitMq:Host is required.")
-                .Validate(options => options.Port is > 0 and <= 65535, "RabbitMq:Port must be between 1 and 65535.")
-                .Validate(options => !string.IsNullOrWhiteSpace(options.VirtualHost), "RabbitMq:VirtualHost is required.")
-                .Validate(options => !string.IsNullOrWhiteSpace(options.Username), "RabbitMq:Username is required.")
-                .Validate(options => !string.IsNullOrWhiteSpace(options.Password), "RabbitMq:Password is required.")
+                .Validate(options => !string.IsNullOrWhiteSpace(options.Host), "RabbitMq:Host é obrigatório.")
+                .Validate(options => options.Port is > 0 and <= 65535, "RabbitMq:Port deve estar entre 1 e 65535.")
+                .Validate(options => !string.IsNullOrWhiteSpace(options.VirtualHost), "RabbitMq:VirtualHost é obrigatório.")
+                .Validate(options => !string.IsNullOrWhiteSpace(options.Username), "RabbitMq:Username é obrigatório.")
+                .Validate(options => !string.IsNullOrWhiteSpace(options.Password), "RabbitMq:Password é obrigatório.")
                 .ValidateOnStart();
 
             services.AddSingleton<IRabbitMqConnectionChecker, RabbitMqConnectionChecker>();
@@ -143,4 +143,3 @@ namespace CatalogAPI.Infrastructure
         }
     }
 }
-

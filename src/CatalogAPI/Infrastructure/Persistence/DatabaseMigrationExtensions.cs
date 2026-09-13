@@ -18,16 +18,16 @@ namespace CatalogAPI.Infrastructure.Persistence
             {
                 try
                 {
-                    logger.LogInformation("Applying CatalogAPI database migrations. Attempt {Attempt}/{MaxAttempts}.", attempt, maxAttempts);
+                    logger.LogInformation("Aplicando migrations do banco da CatalogAPI. Tentativa {Attempt}/{MaxAttempts}.", attempt, maxAttempts);
                     await dbContext.Database.MigrateAsync();
-                    logger.LogInformation("CatalogAPI database migrations applied successfully.");
+                    logger.LogInformation("Migrations do banco da CatalogAPI aplicadas com sucesso.");
                     return;
                 }
                 catch (Exception exception) when (attempt < maxAttempts)
                 {
                     logger.LogWarning(
                         exception,
-                        "CatalogAPI database migration failed. Retrying in 5 seconds. Attempt {Attempt}/{MaxAttempts}.",
+                        "Falha ao aplicar migrations do banco da CatalogAPI. Nova tentativa em 5 segundos. Tentativa {Attempt}/{MaxAttempts}.",
                         attempt,
                         maxAttempts);
 
@@ -39,4 +39,3 @@ namespace CatalogAPI.Infrastructure.Persistence
         }
     }
 }
-

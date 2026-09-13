@@ -17,7 +17,7 @@ public static class GameDetailsDocument
     public static GameDetailsResult Deserialize(BsonDocument document)
     {
         if (document["schemaVersion"].AsInt32 != 1)
-            throw new NotSupportedException("Unsupported game details schema version.");
+            throw new NotSupportedException("Versão do esquema de detalhes do jogo não suportada.");
         var content = new BsonDocument(document.Elements.Where(e => e.Name is not ("_id" or "schemaVersion" or "createdAt" or "updatedAt")));
         return new GameDetailsResult(1,
             JsonSerializer.Deserialize<GameDetailsContent>(content.ToJson(JsonWriter), JsonOptions)!.NormalizeAndValidate(),

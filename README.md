@@ -2,7 +2,7 @@
 
 Microsservico responsavel pelo catalogo de jogos, pela biblioteca de jogos do usuario e pelo inicio do fluxo de compra.
 
-Este projeto foi extraido do monolito FiapCloudGames e segue o mesmo padrao arquitetural usado no UsersAPI: camadas de API, Application, Domain, Infrastructure, Health e Contracts.
+A API organiza suas responsabilidades em camadas de domínio, aplicação, infraestrutura e HTTP.
 
 ## Tecnologias
 
@@ -52,7 +52,7 @@ Este projeto foi extraido do monolito FiapCloudGames e segue o mesmo padrao arqu
 
 ## Endpoints principais
 
-Todos os endpoints exigem JWT. Operacoes administrativas exigem role `Administrator`.
+Os endpoints de negócio exigem JWT. Operações administrativas exigem role Administrator. Health checks e /metrics são operacionais; na orquestração ficam na rede interna.
 
 | Metodo | Rota | Descricao |
 | --- | --- | --- |
@@ -68,21 +68,23 @@ Todos os endpoints exigem JWT. Operacoes administrativas exigem role `Administra
 | `GET` | `/health/live` | Liveness simples. |
 | `GET` | `/health/ready` | Readiness com banco e RabbitMQ. |
 
-### Detalhes do catalogo — Fase 3
+### Detalhes do catálogo — MongoDB
 
 GET individual mantem os campos SQL e acrescenta details e detailsStatus (available, notConfigured ou unavailable). Details contem schemaVersion, content e datas UTC. A listagem e o fluxo de compra continuam exclusivamente SQL. Documento ausente retorna 200/details null; falha Mongo retorna dados SQL com unavailable. PUT exige jogo ativo, valida o contrato, preserva createdAt e retorna 503 se a gravacao Mongo falhar.
 
-Exemplo de PUT via Kong: /catalog/games/{gameId}/details, body {"developer":"Studio","genres":["Action"],"attributes":{"maxPlayers":1}}, com JWT administrativo. Fields title/description/price nao pertencem ao contrato. Corpo limitado a 64 KiB. Arrays e dicionarios null/ausentes viram vazios; campos omitidos no PUT sao limpos. Schema e datas sao gerados pelo servidor.
+Exemplo de PUT via Kong: /catalog/games/{gameId}/details, body {"developer":"Estúdio Exemplo","genres":["Ação"],"attributes":{"maxPlayers":1}}, com JWT administrativo. Os campos title/description/price não pertencem ao contrato. Corpo limitado a 64 KiB. Arrays e dicionarios null/ausentes viram vazios; campos omitidos no PUT sao limpos. Schema e datas sao gerados pelo servidor.
 
-O Compose e a documentacao completa estao no repositorio irmao de orquestracao, em mongodb/README.md. Mongo nao precisa estar acessivel para executar --migrate. Os manifestos completos de Kubernetes com Mongo tambem estao na orquestracao e usam CatalogAPI 0.3.0.
+O Compose e a documentacao completa estao no repositorio irmao de orquestracao, em mongodb/README.md. Mongo nao precisa estar acessivel para executar --migrate. Os manifestos completos de Kubernetes com Mongo e Redis também estao na orquestracao e usam CatalogAPI 0.4.0.
 
-### Cache Redis — Docker
+### Cache Redis
 
-GET /api/games/{gameId} aplica cache-aside da resposta composta SQL/Mongo com TTL absoluto de cinco minutos. HIT evita ambos os bancos; MISS carrega e cacheia available/notConfigured, nunca unavailable nem 404. Atualizacao, desativacao e alteracao dos detalhes invalidam depois do commit. Redis indisponivel nao impede a operacao; cancelamento do cliente nao e mascarado. Logs: CACHE MISS, CACHE HIT e CACHE INVALIDATED.
+GET /api/games/{gameId} aplica cache-aside da resposta composta SQL/Mongo com TTL absoluto de cinco minutos. HIT evita ambos os bancos; MISS carrega e cacheia available/notConfigured, nunca unavailable nem 404. Atualizacao, desativacao e alteracao dos detalhes invalidam depois do commit. Redis indisponivel nao impede a operacao; cancelamento do cliente nao e mascarado. Logs: CACHE NÃO ENCONTRADO, CACHE ENCONTRADO e CACHE INVALIDADO.
 
 O cache e compartilhado por jogo, nao por usuario, e permanece protegido pelo JWT dos controllers. Compras continuam usando SQL diretamente. detailsStatus em um HIT descreve a resposta armazenada, nao a saude atual do Mongo. Consistencia eventual em falhas/races de invalidacao pode manter dados antigos ate o TTL.
 
-Compose, credenciais academicas e guia completo: redis/README.md no repositorio irmao de orquestracao. Kubernetes 0.3.0 nao foi alterado nesta etapa.
+Compose, credenciais academicas e guia completo: redis/README.md no repositorio irmao de orquestracao. A base Kubernetes da orquestração inclui MongoDB, Redis e a imagem CatalogAPI 0.4.0.
+
+No Gateway, use o prefixo /catalog no lugar de /api. POST de compra retorna HTTP 202 com orderId; consulte a biblioteca após o processamento assíncrono do pagamento.
 
 ### Exemplo de compra
 
@@ -136,7 +138,7 @@ Fila dedicada no RabbitMQ:
 catalog-payment-processed-event
 ```
 
-Essa fila e exclusiva da CatalogAPI. A NotificationsAPI tambem consome `PaymentProcessedEvent`, mas usa outra fila para garantir o comportamento publish/subscribe em vez de competir pela mesma mensagem.
+Essa fila e exclusiva da CatalogAPI. A Function no Docker e a NotificationsAPI no Kubernetes também consomem PaymentProcessedEvent, mas usa outra fila para garantir o comportamento publish/subscribe em vez de competir pela mesma mensagem.
 
 ```json
 {
@@ -160,7 +162,15 @@ Essa fila e exclusiva da CatalogAPI. A NotificationsAPI tambem consome `PaymentP
 
 Quando o status for `Approved`, o CatalogAPI adiciona todos os jogos do pedido na biblioteca do usuario. Quando for `Rejected`, apenas marca o pedido como rejeitado.
 
-## Execucao local
+## Execução local
+
+Requisitos: .NET 10 SDK, SQL Server e RabbitMQ. Configure a conexão SQL e o JWT com os mesmos parâmetros da UsersAPI. MongoDB é opcional para leitura; Redis é desabilitado por padrão fora da orquestração.
+
+Para executar as dependências SQL e RabbitMQ deste repositório:
+
+```powershell
+docker compose -f docker-compose.dev.yml up -d
+```
 
 ```powershell
 dotnet restore CatalogAPI.slnx
@@ -187,10 +197,10 @@ dotnet run --project src/CatalogAPI/CatalogAPI.csproj -- --migrate
 Build da imagem:
 
 ```powershell
-docker build -t maicaoxd/fiap-cloud-games-catalog-api:0.1.0 .
+docker build -t maicaoxd/fiap-cloud-games-catalog-api:0.4.0 .
 ```
 
-Para executar o ambiente completo com UsersAPI, CatalogAPI, PaymentsAPI, NotificationsAPI, RabbitMQ e bancos SQL Server, use o `docker-compose.yml` do repositorio `fiap-cloud-games-orchestration`.
+Para executar o ambiente integrado com Gateway, APIs, bancos, cache, monitoração e notificações, use o `docker-compose.yml` do repositorio `fiap-cloud-games-orchestration`.
 
 ## Kubernetes
 
@@ -202,7 +212,7 @@ Este microsservico tem manifests em `k8s/` com:
 - `Secret`
 - `Job` de migration
 
-Os manifests isolados deste servico nao incluem a infraestrutura Mongo da Fase 3. Para essa arquitetura, aplique `k8s/` na raiz do repositorio de orquestracao, apos publicar a imagem CatalogAPI 0.3.0. Consulte o guia `mongodb/README.md` daquele repositorio.
+Os manifests isolados deste servico nao incluem a infraestrutura Mongo da Fase 3. Para essa arquitetura, aplique `k8s/` na raiz do repositorio de orquestracao, apos publicar a imagem CatalogAPI 0.4.0. Consulte o guia `mongodb/README.md` daquele repositorio.
 
 Aplicar manifests isolados deste servico (nao representa o ambiente completo da Fase 3):
 
@@ -213,10 +223,10 @@ kubectl get services -n fiap-cloud-games
 kubectl logs deployment/catalog-api -n fiap-cloud-games
 ```
 
-## Validacao feita
+## Testes
 
 ```powershell
-dotnet test CatalogAPI.slnx --no-restore -m:1
+dotnet test CatalogAPI.slnx -m:1
 ```
 
-Resultado: 68 testes aprovados.
+A suíte cobre domínio, casos de uso, autenticação, contratos HTTP, detalhes MongoDB e cache Redis.

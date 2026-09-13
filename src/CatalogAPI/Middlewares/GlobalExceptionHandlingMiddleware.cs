@@ -39,14 +39,14 @@ namespace CatalogAPI.Api.Middlewares
         {
             if (exception is GameDetailsUnavailableException)
             {
-                _logger.LogWarning("MongoDB unavailable while processing {Method} {Path}.", context.Request.Method, context.Request.Path);
+                _logger.LogWarning("MongoDB indisponível ao processar {Method} {Path}.", context.Request.Method, context.Request.Path);
                 return;
             }
             if (statusCode >= StatusCodes.Status500InternalServerError)
             {
                 _logger.LogError(
                     exception,
-                    "Unhandled exception while processing {Method} {Path}.",
+                    "Exceção não tratada ao processar {Method} {Path}.",
                     context.Request.Method,
                     context.Request.Path);
 
@@ -55,7 +55,7 @@ namespace CatalogAPI.Api.Middlewares
 
             _logger.LogWarning(
                 exception,
-                "Handled exception while processing {Method} {Path}.",
+                "Exceção tratada ao processar {Method} {Path}.",
                 context.Request.Method,
                 context.Request.Path);
         }
@@ -165,4 +165,3 @@ namespace CatalogAPI.Api.Middlewares
         }
     }
 }
-

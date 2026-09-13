@@ -30,7 +30,7 @@ namespace CatalogAPI.Infrastructure.Messaging.Consumers
             await _processPaymentResultUseCase.ExecuteAsync(command, context.CancellationToken);
 
             _logger.LogInformation(
-                "PaymentProcessedEvent consumed. OrderId: {OrderId}, UserId: {UserId}, Games: {GameCount}, Status: {Status}",
+                "PaymentProcessedEvent consumido. OrderId: {OrderId}, UserId: {UserId}, Jogos: {GameCount}, Status: {Status}",
                 message.OrderId,
                 message.UserId,
                 message.Games.Count,
