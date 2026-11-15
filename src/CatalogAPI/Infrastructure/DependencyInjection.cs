@@ -1,19 +1,21 @@
-﻿using CatalogAPI.Application.Abstractions.Messaging;
+﻿using CatalogAPI.Application.Abstractions.Caching;
+using CatalogAPI.Application.Abstractions.Messaging;
 using CatalogAPI.Application.Abstractions.Persistence;
+using CatalogAPI.Application.Games.Search;
 using CatalogAPI.Health;
+using CatalogAPI.Infrastructure.Caching;
 using CatalogAPI.Infrastructure.Messaging;
 using CatalogAPI.Infrastructure.Messaging.Consumers;
 using CatalogAPI.Infrastructure.Persistence;
+using CatalogAPI.Infrastructure.Persistence.Mongo;
 using CatalogAPI.Infrastructure.Persistence.Repositories;
+using CatalogAPI.Infrastructure.Search;
 using CatalogAPI.Infrastructure.Security;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using CatalogAPI.Infrastructure.Persistence.Mongo;
-using MongoDB.Driver;
-using CatalogAPI.Application.Abstractions.Caching;
-using CatalogAPI.Infrastructure.Caching;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using StackExchange.Redis;
 
 namespace CatalogAPI.Infrastructure
@@ -27,6 +29,7 @@ namespace CatalogAPI.Infrastructure
             AddPersistence(services, configuration);
             AddMongoPersistence(services, configuration);
             AddRedisCache(services, configuration);
+            AddSearch(services, configuration);
             AddSecurity(services, configuration);
             AddMessaging(services, configuration);
 
@@ -74,12 +77,12 @@ namespace CatalogAPI.Infrastructure
 
         private static void AddRedisCache(IServiceCollection services, IConfiguration configuration)
         {
-            services.AddOptions<Caching.RedisOptions>()
-                .Bind(configuration.GetSection(Caching.RedisOptions.SectionName))
+            services.AddOptions<RedisOptions>()
+                .Bind(configuration.GetSection(RedisOptions.SectionName))
                 .Validate(o => !o.Enabled || !string.IsNullOrWhiteSpace(o.Configuration), "Redis:Configuration é obrigatório quando o cache está habilitado.")
                 .ValidateOnStart();
             services.AddStackExchangeRedisCache(_ => { });
-            services.AddOptions<RedisCacheOptions>().Configure<IOptions<Caching.RedisOptions>>((cache, configured) =>
+            services.AddOptions<RedisCacheOptions>().Configure<IOptions<RedisOptions>>((cache, configured) =>
             {
                 var options = configured.Value;
                 var connection = ConfigurationOptions.Parse(options.Enabled ? options.Configuration : "localhost:6379");
@@ -94,6 +97,19 @@ namespace CatalogAPI.Infrastructure
                 cache.InstanceName = "fcg:catalog:";
             });
             services.AddScoped<IGameCache, RedisGameCache>();
+        }
+
+        private static void AddSearch(IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddOptions<ElasticsearchOptions>()
+                .Bind(configuration.GetSection("Elasticsearch"))
+                .Validate<IHostEnvironment>((options, environment) => options.IsValid(environment.IsDevelopment()),
+                    "Configure Elasticsearch:Endpoint (HTTPS fora de Development) e IndexName válido, sem credenciais na URL.")
+                .ValidateOnStart();
+            services.AddHttpClient<IGameSearchIndex, ElasticsearchGameIndex>(client =>
+                client.Timeout = TimeSpan.FromSeconds(5));
+            services.AddScoped<GameSearchOutboxStore>();
+            services.AddHostedService<GameSearchIndexer>();
         }
 
         private static void AddSecurity(IServiceCollection services, IConfiguration configuration)

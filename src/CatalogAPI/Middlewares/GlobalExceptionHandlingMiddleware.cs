@@ -1,6 +1,7 @@
 ﻿using CatalogAPI.Api.Common;
 using CatalogAPI.Application.Common;
 using CatalogAPI.Application.Common.Exceptions;
+using CatalogAPI.Application.Games.Search;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,6 +43,11 @@ namespace CatalogAPI.Api.Middlewares
                 _logger.LogWarning("MongoDB indisponível ao processar {Method} {Path}.", context.Request.Method, context.Request.Path);
                 return;
             }
+            if (exception is GameSearchUnavailableException)
+            {
+                _logger.LogWarning("Busca de jogos indisponível ao processar a requisição.");
+                return;
+            }
             if (statusCode >= StatusCodes.Status500InternalServerError)
             {
                 _logger.LogError(
@@ -74,6 +80,8 @@ namespace CatalogAPI.Api.Middlewares
         {
             return exception switch
             {
+                GameSearchUnavailableException => CreateProblemDetails(
+                    context, StatusCodes.Status503ServiceUnavailable, "Busca indisponível", exception.Message),
                 GameDetailsUnavailableException => CreateProblemDetails(
                     context, StatusCodes.Status503ServiceUnavailable,
                     "Serviço indisponível", exception.Message),

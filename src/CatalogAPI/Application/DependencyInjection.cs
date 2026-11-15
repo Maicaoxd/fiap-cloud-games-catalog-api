@@ -3,6 +3,7 @@ using CatalogAPI.Application.Games.Deactivate;
 using CatalogAPI.Application.Games.Details;
 using CatalogAPI.Application.Games.Get;
 using CatalogAPI.Application.Games.List;
+using CatalogAPI.Application.Games.Search;
 using CatalogAPI.Application.Games.Update;
 using CatalogAPI.Application.Libraries.List;
 using CatalogAPI.Application.Payments.ProcessPaymentResult;
@@ -30,6 +31,7 @@ namespace CatalogAPI.Application
             services.AddScoped<ListGamesUseCase>();
             services.AddScoped<UpdateGameUseCase>();
             services.AddScoped<UpsertGameDetailsUseCase>();
+            services.AddScoped<SearchGamesUseCase>();
         }
 
         private static void AddLibraryUseCases(IServiceCollection services)

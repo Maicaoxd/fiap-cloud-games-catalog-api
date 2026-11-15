@@ -226,6 +226,48 @@ namespace CatalogAPI.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CatalogAPI.Infrastructure.Search.GameSearchOutboxMessage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("GameId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("LeaseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("LeaseUntil")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NextAttemptAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameId");
+
+                    b.HasIndex("ProcessedAt", "NextAttemptAt", "LeaseUntil");
+
+                    b.ToTable("GameSearchOutbox", (string)null);
+                });
+
             modelBuilder.Entity("CatalogAPI.Domain.Libraries.Library", b =>
                 {
                     b.HasOne("CatalogAPI.Domain.Games.Game", null)
@@ -247,6 +289,15 @@ namespace CatalogAPI.Infrastructure.Migrations
                         .WithMany("Items")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CatalogAPI.Infrastructure.Search.GameSearchOutboxMessage", b =>
+                {
+                    b.HasOne("CatalogAPI.Domain.Games.Game", null)
+                        .WithMany()
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

@@ -17,6 +17,14 @@ A API organiza suas responsabilidades em camadas de domínio, aplicação, infra
 - JWT Bearer Authentication
 - xUnit, NSubstitute e Shouldly
 
+## Busca com Elasticsearch
+
+`GET /api/search?q=texto&page=1&pageSize=20` exige JWT e consulta exclusivamente o Elasticsearch. Pelo Kong, use `/catalog/search`. A busca tolera erros de digitação, dá maior peso ao título, ordena por relevância e retorna somente jogos ativos.
+
+Criação, edição e desativação persistem uma mensagem de indexação na mesma transação SQL. O worker processa a outbox com lease, retry e versão externa por documento. A indexação é eventualmente consistente; compras continuam usando SQL.
+
+Configure `Elasticsearch__Enabled`, `Elasticsearch__Endpoint`, `Elasticsearch__IndexName` e, no Elastic Cloud, `Elasticsearch__ApiKey` externamente. A busca fica desabilitada por padrão e responde 503 quando desabilitada/indisponível. A integração usa a API REST via HttpClient nativo; HTTPS é obrigatório fora de Development. Detalhes e Compose local em `elasticsearch/README.md` no repositório de orquestração.
+
 ## Responsabilidades
 
 - CRUD de jogos.

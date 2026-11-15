@@ -1,6 +1,7 @@
 ﻿using CatalogAPI.Application.Abstractions.Persistence;
 using CatalogAPI.Application.Common.Exceptions;
 using CatalogAPI.Domain.Games;
+using CatalogAPI.Infrastructure.Search;
 using Microsoft.EntityFrameworkCore;
 
 namespace CatalogAPI.Infrastructure.Persistence.Repositories
@@ -81,7 +82,7 @@ namespace CatalogAPI.Infrastructure.Persistence.Repositories
 
             try
             {
-                await _dbContext.SaveChangesAsync(cancellationToken);
+                await PersistWithSearchAsync(game, cancellationToken);
             }
             catch (DbUpdateException exception) when (
                 SqlServerUniqueConstraintDetector.IsUniqueConstraintViolation(
@@ -98,7 +99,7 @@ namespace CatalogAPI.Infrastructure.Persistence.Repositories
 
             try
             {
-                await _dbContext.SaveChangesAsync(cancellationToken);
+                await PersistWithSearchAsync(game, cancellationToken);
             }
             catch (DbUpdateException exception) when (
                 SqlServerUniqueConstraintDetector.IsUniqueConstraintViolation(
@@ -107,6 +108,15 @@ namespace CatalogAPI.Infrastructure.Persistence.Repositories
             {
                 throw new GameTitleAlreadyRegisteredException();
             }
+        }
+        private async Task PersistWithSearchAsync(Game game, CancellationToken cancellationToken)
+        {
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            // A gravação do jogo mantém o lock até a criação da pendência na mesma transação.
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            _dbContext.GameSearchOutbox.Add(GameSearchOutboxMessage.From(game));
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
         }
     }
 }
