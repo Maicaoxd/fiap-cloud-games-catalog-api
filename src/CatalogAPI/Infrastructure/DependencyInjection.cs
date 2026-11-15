@@ -12,6 +12,7 @@ using CatalogAPI.Infrastructure.Persistence.Repositories;
 using CatalogAPI.Infrastructure.Search;
 using CatalogAPI.Infrastructure.Security;
 using MassTransit;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Options;
@@ -40,6 +41,10 @@ namespace CatalogAPI.Infrastructure
         {
             var connectionString = configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("A cadeia de conexão DefaultConnection não foi configurada.");
+
+            var password = configuration["SqlServer:Password"];
+            if (!string.IsNullOrEmpty(password))
+                connectionString = new SqlConnectionStringBuilder(connectionString) { Password = password }.ConnectionString;
 
             services.AddDbContext<CatalogDbContext>(options =>
                 options.UseSqlServer(connectionString));
