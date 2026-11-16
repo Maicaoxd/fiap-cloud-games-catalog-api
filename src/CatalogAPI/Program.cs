@@ -23,7 +23,8 @@ app.UseApiPresentation();
 app.MapGet("/health/live", () => Results.Ok(new
 {
     status = "Healthy",
-    service = "CatalogAPI"
+    service = "CatalogAPI",
+    version = "1.0.1"
 }))
 .WithName("LiveHealthCheck");
 
