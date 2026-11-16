@@ -1,20 +1,44 @@
-name: CI
+name: CI/CD
+
 on:
   push:
     branches: [master]
   pull_request:
     branches: [master]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Tag de versão opcional, por exemplo v1.2.3
+        default: ""
+        type: string
+
 permissions:
   contents: read
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  test:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          persist-credentials: false
-      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
-        with:
-          dotnet-version: 10.0.x
-      - name: Executar testes
-        run: dotnet test tests/CatalogAPI.Tests/CatalogAPI.Tests.csproj --configuration Release
+  build:
+    permissions:
+      contents: read
+      id-token: write
+    uses: Maicaoxd/fiap-cloud-games-orchestration/.github/workflows/service-build.yml@master
+    with:
+      service: catalog-api
+      project: CatalogAPI
+      source_ref: ${{ github.sha }}
+      publish: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
+      version: ${{ inputs.version || '' }}
+
+  deploy:
+    needs: build
+    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
+    permissions:
+      contents: read
+      id-token: write
+    uses: Maicaoxd/fiap-cloud-games-orchestration/.github/workflows/service-deploy.yml@master
+    with:
+      service: catalog-api
+      digest: ${{ needs.build.outputs.digest }}

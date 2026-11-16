@@ -244,3 +244,9 @@ dotnet test CatalogAPI.slnx -m:1
 ```
 
 A suíte cobre domínio, casos de uso, autenticação, contratos HTTP, detalhes MongoDB e cache Redis.
+
+## CI/CD
+
+Pushes para master executam testes, publicam a imagem no ACR e atualizam apenas esta API no AKS, após sua migration SQL. Pull requests executam testes e build sem publicar ou fazer deploy.
+
+As imagens recebem tags por commit e execução. Para acrescentar uma versão como v1.2.3, preencha version na execução manual pela master. O deploy no AKS usa o digest da imagem. Configure as variáveis Azure e a credencial federada deste repositório conforme o [guia da orquestração](https://github.com/Maicaoxd/fiap-cloud-games-orchestration/blob/master/k8s/azure/README.md#github-actions).
