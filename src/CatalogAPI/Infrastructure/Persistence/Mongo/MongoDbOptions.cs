@@ -3,7 +3,7 @@ namespace CatalogAPI.Infrastructure.Persistence.Mongo;
 public sealed class MongoDbOptions
 {
     public const string SectionName = "MongoDb";
-    public string ConnectionString { get; set; } = "mongodb://localhost:27017";
+    public string ConnectionString { get; set; } = "";
     public string? Username { get; set; }
     public string? Password { get; set; }
     public string DatabaseName { get; set; } = "FiapCloudGamesCatalog";

@@ -1,4 +1,4 @@
-﻿# FIAP Cloud Games - CatalogAPI
+# FIAP Cloud Games - CatalogAPI
 
 Microsservico responsavel pelo catalogo de jogos, pela biblioteca de jogos do usuario e pelo inicio do fluxo de compra.
 
@@ -33,6 +33,12 @@ Configure `Elasticsearch__Enabled`, `Elasticsearch__Endpoint`, `Elasticsearch__I
 - Publicacao de `OrderPlacedEvent`.
 - Consumo de `PaymentProcessedEvent`.
 - Inclusao dos jogos do pedido na biblioteca quando o pagamento for `Approved`.
+
+## Configuração local
+
+Em um checkout novo, copie `.env.example` para `.env` e preencha os valores usados pelo Compose. Para executar com `dotnet run`, copie `src/CatalogAPI/appsettings.json` para `src/CatalogAPI/appsettings.Development.json` e configure as conexões e credenciais nesse arquivo privado. Variáveis de ambiente também podem fornecer os valores. Os arquivos locais são ignorados pelo Git e pelo build Docker.
+
+Para Kubernetes local, copie `k8s/local-secrets.example.yaml` para `k8s/local-secrets.yaml` e preencha os valores antes de aplicar os manifestos.
 
 ## Variaveis de ambiente
 

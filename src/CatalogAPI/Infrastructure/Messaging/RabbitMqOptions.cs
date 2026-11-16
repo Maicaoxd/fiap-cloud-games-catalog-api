@@ -1,4 +1,4 @@
-﻿namespace CatalogAPI.Infrastructure.Messaging
+namespace CatalogAPI.Infrastructure.Messaging
 {
     public sealed class RabbitMqOptions
     {
@@ -10,9 +10,9 @@
 
         public string VirtualHost { get; init; } = "/";
 
-        public string Username { get; init; } = "guest";
+        public string Username { get; init; } = "";
 
-        public string Password { get; init; } = "guest";
+        public string Password { get; init; } = "";
     }
 }
 

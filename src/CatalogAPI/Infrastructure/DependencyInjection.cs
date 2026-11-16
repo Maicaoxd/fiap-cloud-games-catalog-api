@@ -90,7 +90,9 @@ namespace CatalogAPI.Infrastructure
             services.AddOptions<RedisCacheOptions>().Configure<IOptions<RedisOptions>>((cache, configured) =>
             {
                 var options = configured.Value;
-                var connection = ConfigurationOptions.Parse(options.Enabled ? options.Configuration : "localhost:6379");
+                var connection = options.Enabled
+                    ? ConfigurationOptions.Parse(options.Configuration)
+                    : new ConfigurationOptions();
                 if (!string.IsNullOrEmpty(options.Password)) connection.Password = options.Password;
                 connection.AbortOnConnectFail = false;
                 connection.ConnectTimeout = 1000;

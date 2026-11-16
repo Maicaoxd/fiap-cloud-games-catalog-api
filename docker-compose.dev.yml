@@ -1,10 +1,10 @@
-﻿services:
+services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: fcg-catalog-sqlserver
     environment:
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: "Fcg@123456"
+      SA_PASSWORD: "${FCG_CATALOG_SQL_PASSWORD:?Defina FCG_CATALOG_SQL_PASSWORD no arquivo .env}"
     ports:
       - "1433:1433"
     volumes:
@@ -17,8 +17,8 @@
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: "guest"
-      RABBITMQ_DEFAULT_PASS: "guest"
+      RABBITMQ_DEFAULT_USER: "${FCG_RABBITMQ_USERNAME:?Defina FCG_RABBITMQ_USERNAME no arquivo .env}"
+      RABBITMQ_DEFAULT_PASS: "${FCG_RABBITMQ_PASSWORD:?Defina FCG_RABBITMQ_PASSWORD no arquivo .env}"
 
 volumes:
   catalog_sqlserver_data:
